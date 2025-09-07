@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간단한 PvP 게임</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="canvas" width="800" height="600"></canvas>
+        <div id="ui">
+            <!-- 캐릭터 선택 화면 -->
+            <div id="characterSelect" class="screen active">
+                <h3>캐릭터 선택</h3>
+                <button class="character-btn" data-char="tanjiro">탄지로</button>
+                <button class="character-btn" data-char="zenitsu">젠이츠</button>
+                <button class="character-btn" data-char="akaza">아카자</button>
+                <button class="character-btn" data-char="doma">도우마</button>
+                
+                <button id="findMatchBtn" disabled>매치 찾기</button>
+            </div>
+
+            <!-- 대기 화면 -->
+            <div id="waitingScreen" class="screen">
+                <h3>상대방을 기다리는 중...</h3>
+                <p>잠시만 기다려주세요.</p>
+            </div>
+
+            <!-- 게임 화면 -->
+            <div id="gameScreen" class="screen">
+                <h3>게임 중</h3>
+                <div class="controls">
+                    <strong>조작법:</strong><br>
+                    WASD: 이동 및 방향<br>
+                    Space: 공격
+                </div>
+                <div id="playersInfo"></div>
+            </div>
+
+            <div id="gameLog"></div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="game.js"></script>
+    <script src="renderer.js"></script>
+    <script src="input.js"></script>
+    <script src="ui.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
