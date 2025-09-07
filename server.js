@@ -130,13 +130,90 @@ class GameRoom {
     console.log(`플레이어 ${player.id} 이동: ${direction} -> (${player.x}, ${player.y})`);
   }
 
-  handlePlayerAttack(socketId) {
+  handlePlayerSkill(socketId, skillType) {
     const player = this.players.get(socketId);
     if (!player || this.gameState !== 'playing') return;
 
-    // 방향에 따른 투사체 속도
+    // 쿨다운 체크
+    if (player.cooldowns[skillType] > 0) {
+      console.log(`플레이어 ${player.id} 스킬 ${skillType} 쿨다운 중`);
+      return;
+    }
+
+    // 캐릭터별 스킬 데이터
+    const skills = this.getCharacterSkills(player.charType);
+    const skill = skills[skillType];
+    
+    if (!skill) return;
+
+    // 쿨다운 설정
+    player.cooldowns[skillType] = skill.cooldown;
+
+    // 스킬 실행
+    this.executeSkill(player, skill, skillType);
+    
+    console.log(`플레이어 ${player.id}가 ${skill.name} 사용!`);
+  }
+
+  getCharacterSkills(charType) {
+    const skillData = {
+      tanjiro: {
+        skill1: { name: '물방아', damage: 40, cooldown: 8000, type: 'dash' },
+        skill2: { name: '비틀린 소용돌이', damage: 30, cooldown: 6000, type: 'projectile' },
+        ultimate: { name: '해의 호흡 13형', damage: 80, cooldown: 60000, type: 'multi-hit' }
+      },
+      zenitsu: {
+        skill1: { name: '벽력일섬 육연', damage: 25, cooldown: 12000, type: 'multi-dash' },
+        skill2: { name: '벽력일섬 신속', damage: 60, cooldown: 15000, type: 'dash' },
+        ultimate: { name: '화뢰신', damage: 100, cooldown: 60000, type: 'dash' }
+      },
+      akaza: {
+        skill1: { name: '파괴살 공식', damage: 35, cooldown: 7000, type: 'projectile' },
+        skill2: { name: '파괴살 난식', damage: 50, cooldown: 10000, type: 'area' },
+        ultimate: { name: '파괴살 멸식', damage: 120, cooldown: 70000, type: 'explosion' }
+      },
+      doma: {
+        skill1: { name: '흩날리는 연꽃', damage: 30, cooldown: 8000, type: 'cone' },
+        skill2: { name: '겨울철 고드름', damage: 45, cooldown: 12000, type: 'targeted' },
+        ultimate: { name: '혹한의 겨울 여신', damage: 25, cooldown: 60000, type: 'area-persistent' }
+      }
+    };
+    
+    return skillData[charType] || {};
+  }
+
+  executeSkill(player, skill, skillType) {
+    switch(skill.type) {
+      case 'projectile':
+        this.createSkillProjectile(player, skill, 1);
+        break;
+      case 'multi-hit':
+        this.createSkillProjectile(player, skill, 3);
+        break;
+      case 'dash':
+        this.createDashAttack(player, skill);
+        break;
+      case 'multi-dash':
+        this.createSkillProjectile(player, skill, 6);
+        break;
+      case 'area':
+        this.createAreaAttack(player, skill);
+        break;
+      case 'cone':
+        this.createConeAttack(player, skill);
+        break;
+      case 'targeted':
+        this.createTargetedAttack(player, skill);
+        break;
+      case 'explosion':
+        this.createExplosionAttack(player, skill);
+        break;
+    }
+  }
+
+  createSkillProjectile(player, skill, count) {
     let vx = 0, vy = 0;
-    const speed = 8;
+    const speed = 10;
 
     switch(player.direction) {
       case 'up': vy = -speed; break;
@@ -145,20 +222,131 @@ class GameRoom {
       case 'right': vx = speed; break;
     }
 
-    // 투사체 생성
-    const projectile = {
-      id: Date.now() + Math.random(),
-      ownerId: player.id,
-      x: player.x,
-      y: player.y,
-      vx: vx,
-      vy: vy,
-      life: 120, // 2초
-      damage: 20
-    };
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const projectile = {
+          id: Date.now() + Math.random(),
+          ownerId: player.id,
+          x: player.x,
+          y: player.y,
+          vx: vx,
+          vy: vy,
+          life: 180,
+          damage: skill.damage,
+          type: 'skill'
+        };
+        this.projectiles.push(projectile);
+      }, i * 200);
+    }
+  }
 
-    this.projectiles.push(projectile);
-    console.log(`플레이어 ${player.id} 공격! 방향: ${player.direction}`);
+  createDashAttack(player, skill) {
+    // 대시 공격 (즉시 피해)
+    const dashDistance = 100;
+    let targetX = player.x, targetY = player.y;
+    
+    switch(player.direction) {
+      case 'up': targetY -= dashDistance; break;
+      case 'down': targetY += dashDistance; break;
+      case 'left': targetX -= dashDistance; break;
+      case 'right': targetX += dashDistance; break;
+    }
+    
+    // 대시 경로상의 적에게 피해
+    const players = Array.from(this.players.values());
+    for (let otherPlayer of players) {
+      if (otherPlayer.id !== player.id) {
+        const distance = Math.hypot(otherPlayer.x - player.x, otherPlayer.y - player.y);
+        if (distance < dashDistance) {
+          this.damagePlayer(otherPlayer, skill.damage, player.id);
+        }
+      }
+    }
+  }
+
+  createAreaAttack(player, skill) {
+    // 주변 지역 공격
+    const players = Array.from(this.players.values());
+    for (let otherPlayer of players) {
+      if (otherPlayer.id !== player.id) {
+        const distance = Math.hypot(otherPlayer.x - player.x, otherPlayer.y - player.y);
+        if (distance < 80) {
+          this.damagePlayer(otherPlayer, skill.damage, player.id);
+        }
+      }
+    }
+  }
+
+  createConeAttack(player, skill) {
+    // 부채꼴 공격 (3개의 투사체)
+    const angles = [-0.3, 0, 0.3];
+    const speed = 12;
+    
+    angles.forEach((angleOffset, index) => {
+      setTimeout(() => {
+        let vx = 0, vy = 0;
+        
+        switch(player.direction) {
+          case 'up': 
+            vx = Math.sin(angleOffset) * speed;
+            vy = -Math.cos(angleOffset) * speed;
+            break;
+          case 'down':
+            vx = -Math.sin(angleOffset) * speed;
+            vy = Math.cos(angleOffset) * speed;
+            break;
+          case 'left':
+            vx = -Math.cos(angleOffset) * speed;
+            vy = Math.sin(angleOffset) * speed;
+            break;
+          case 'right':
+            vx = Math.cos(angleOffset) * speed;
+            vy = -Math.sin(angleOffset) * speed;
+            break;
+        }
+        
+        const projectile = {
+          id: Date.now() + Math.random(),
+          ownerId: player.id,
+          x: player.x,
+          y: player.y,
+          vx: vx,
+          vy: vy,
+          life: 120,
+          damage: skill.damage,
+          type: 'skill'
+        };
+        this.projectiles.push(projectile);
+      }, index * 100);
+    });
+  }
+
+  createTargetedAttack(player, skill) {
+    // 상대방 위치에 공격
+    const players = Array.from(this.players.values());
+    const target = players.find(p => p.id !== player.id);
+    
+    if (target) {
+      setTimeout(() => {
+        const distance = Math.hypot(target.x - player.x, target.y - player.y);
+        if (distance < 300) { // 사거리 내에 있으면
+          this.damagePlayer(target, skill.damage, player.id);
+        }
+      }, 1500); // 1.5초 후 공격
+    }
+  }
+
+  createExplosionAttack(player, skill) {
+    // 폭발 공격 (넓은 범위)
+    const players = Array.from(this.players.values());
+    for (let otherPlayer of players) {
+      if (otherPlayer.id !== player.id) {
+        const distance = Math.hypot(otherPlayer.x - player.x, otherPlayer.y - player.y);
+        if (distance < 150) {
+          this.damagePlayer(otherPlayer, skill.damage, player.id);
+        }
+      }
+    }
   }
 
   broadcastGameState() {
