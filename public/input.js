@@ -33,6 +33,17 @@ class InputManager {
             e.preventDefault();
             game.attackPlayer();
         }
+        
+        // 스킬 키
+        if (e.code === 'KeyN') {
+            game.useSkill('skill1');
+        }
+        if (e.code === 'KeyM') {
+            game.useSkill('skill2');
+        }
+        if (e.code === 'Comma') {
+            game.useSkill('ultimate');
+        }
     }
 
     handleKeyUp(e) {
