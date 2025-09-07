@@ -57,6 +57,15 @@ class Game {
             this.projectiles = data.projectiles;
             updatePlayersInfo(this.players);
         });
+
+        this.socket.on('playerDamaged', (data) => {
+            addLog(`플레이어가 ${data.damage} 피해를 받음! (${data.hp}/${data.maxHp})`);
+        });
+
+        this.socket.on('gameEnd', (data) => {
+            this.gameState = 'ended';
+            addLog(`게임 종료! 플레이어 ${data.winnerId} 승리!`);
+        });
     }
 
     // 매치 찾기
