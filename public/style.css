@@ -1,0 +1,130 @@
+body {
+    margin: 0;
+    padding: 20px;
+    background: #222;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+#gameContainer {
+    display: flex;
+    gap: 20px;
+}
+
+#canvas {
+    border: 2px solid #fff;
+    background: #333;
+}
+
+#ui {
+    width: 300px;
+}
+
+.character-btn {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    padding: 15px;
+    background: #444;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.character-btn:hover {
+    background: #555;
+}
+
+.character-btn.selected {
+    background: #666;
+    border: 2px solid #fff;
+}
+
+#findMatchBtn {
+    width: 100%;
+    padding: 20px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 20px 0;
+    transition: background 0.3s;
+}
+
+#findMatchBtn:hover:not(:disabled) {
+    background: #0056b3;
+}
+
+#findMatchBtn:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+
+.screen {
+    display: none;
+}
+
+.screen.active {
+    display: block;
+}
+
+#gameLog {
+    height: 200px;
+    overflow-y: auto;
+    background: #111;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    margin-top: 20px;
+    border: 1px solid #444;
+}
+
+#gameLog::-webkit-scrollbar {
+    width: 6px;
+}
+
+#gameLog::-webkit-scrollbar-track {
+    background: #222;
+}
+
+#gameLog::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 3px;
+}
+
+.controls {
+    margin: 20px 0;
+    padding: 15px;
+    background: #111;
+    border-radius: 5px;
+    border: 1px solid #444;
+}
+
+.controls strong {
+    color: #007bff;
+}
+
+#playersInfo {
+    margin: 15px 0;
+    padding: 10px;
+    background: #111;
+    border-radius: 5px;
+    border: 1px solid #444;
+}
+
+#playersInfo div {
+    margin: 5px 0;
+    padding: 5px;
+    background: #333;
+    border-radius: 3px;
+}
+
+h3 {
+    margin-top: 0;
+    color: #007bff;
+}
